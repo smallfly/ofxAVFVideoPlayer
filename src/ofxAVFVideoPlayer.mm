@@ -25,6 +25,7 @@ ofxAVFVideoPlayer::ofxAVFVideoPlayer()
     currentLoopState = OF_LOOP_NORMAL;
     
     bTheFutureIsNow = false;
+	bShouldLoadAudio = false; // maybe: dont change previouse default behaviour and set this to true
 }
 
 //--------------------------------------------------------------
@@ -46,6 +47,7 @@ bool ofxAVFVideoPlayer::loadMovie(string path)
     moviePlayer = [[AVFVideoRenderer alloc] init];
     [moviePlayer setUseAlpha:(pixelFormat == OF_PIXELS_RGBA)];
     [moviePlayer setUseTexture:YES];
+	[moviePlayer setShouldLoadAudio:bShouldLoadAudio];
     
     bTheFutureIsNow = moviePlayer.theFutureIsNow;
 
@@ -286,6 +288,18 @@ bool ofxAVFVideoPlayer::isLoading()
 bool ofxAVFVideoPlayer::isLoaded()
 {
     return bInitialized;
+}
+
+//--------------------------------------------------------------
+bool ofxAVFVideoPlayer::shouldLoadAudio()
+{
+	return bShouldLoadAudio;
+}
+
+//--------------------------------------------------------------
+void ofxAVFVideoPlayer::setShouldLoadAudio(bool doLoadAudio)
+{
+	bShouldLoadAudio = doLoadAudio;
 }
 
 //--------------------------------------------------------------

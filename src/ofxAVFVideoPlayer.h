@@ -52,6 +52,8 @@ public:
     
     bool                isLoading();
     bool                isLoaded();
+	bool				shouldLoadAudio();
+	void				setShouldLoadAudio(bool doLoadAudio);
     bool                isAudioLoaded();
     bool                errorLoading();
     
@@ -101,6 +103,7 @@ protected:
     
     bool bPaused;
 	bool bShouldPlay;
+	bool bShouldLoadAudio;
 	
 	float scrubToTime;
     bool bNewFrame;
