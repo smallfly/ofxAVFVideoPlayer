@@ -158,6 +158,7 @@ int count = 0;
                     // Create and attach video output. 10.8 Only!!!
                     self.playerItemVideoOutput = [[AVPlayerItemVideoOutput alloc] initWithPixelBufferAttributes:[self pixelBufferAttributes]];
 					[self.playerItemVideoOutput autorelease];
+					
                     if (self.playerItemVideoOutput) {
                         [(AVPlayerItemVideoOutput *)self.playerItemVideoOutput setSuppressesPlayerRendering:YES];
                     }
@@ -178,8 +179,9 @@ int count = 0;
                     self.player = [AVPlayer playerWithPlayerItem:self.playerItem];
                     
                     AVPlayerLayer * playerLayer = [AVPlayerLayer playerLayerWithPlayer:self.player];
+                    _layerRenderer = [CARenderer rendererWithCGLContext:CGLGetCurrentContext() options:nil];
 					// need to retain that?
-                    _layerRenderer = [[CARenderer rendererWithCGLContext:CGLGetCurrentContext() options:nil] retain];
+					[_layerRenderer retain];
                     _layerRenderer.layer = playerLayer;
                     
                     // Video is centered on 0,0 for some reason so layer bounds have to start at -width/2,-height/2
@@ -217,7 +219,7 @@ int count = 0;
 
 							if (![assetReader startReading]) {
 								error = [assetReader error];
-								NSLog(@"error: %@", [error userInfo]);
+								NSLog(@"error starting asset reader: %@", [error userInfo]);
 							}
 							
                             count = 0;
@@ -226,23 +228,26 @@ int count = 0;
 							// we need to release this created queue
 							evQ = dispatch_queue_create("eventQueue", NULL);
 							
-							// somehow periodicTimeObserver does not release self, when done...
+							// periodicTimeObserver does retain self (suspecting an issue here...)
 							// we can ignore this, by not making the block retaining self
 							// make a reference to self, declare it with __block
-							// but: what happens, if self get deleted and the timeObserver is still running?
+							// we need to syncronize with this block if we dealloc
 							__block AVFVideoRenderer* refToSelf = self;
 							
                             // Add a periodic time observer that will store the audio track data in a buffer that we can access later
                             _periodicTimeObserver = [self.player addPeriodicTimeObserverForInterval:CMTimeMake(1001, [audioTrack nominalFrameRate] * 1001)
                                                                                               queue:evQ
                                                                                          usingBlock:^(CMTime time) {
+																							 
                                                                                              if ([assetReader status] == AVAssetReaderStatusCompleted) {
+																								 
                                                                                                  // Got all the data we need, kill this block.
                                                                                                  [refToSelf.player removeTimeObserver:refToSelf->_periodicTimeObserver];
-                                                                                                 
+																								 _periodicTimeObserver = nil;
+																								 
                                                                                                  refToSelf->_numAmplitudes = [refToSelf->_amplitudes length] / sizeof(float);
                                                                                                  refToSelf->_bAudioLoaded = YES;
-                                                                                                 
+																							 
                                                                                                  return;
                                                                                              }
                                                                                              
@@ -319,72 +324,106 @@ int count = 0;
     }];
 }
 
+
+//--------------------------------------------------------------
+- (void)finalize
+{
+	// clenaup
+	[self cleanup];
+	
+	// release me
+	[self autorelease];
+}
+
+
 //--------------------------------------------------------------
 - (void)dealloc
 {
-	// for debugging purpose
+	// now we are sure this gets deleted
+	// logging for debugging reason
 	NSLog(@"VideoRenderer dealloc");
 	
-    [self stop];
-            
-    if (self.theFutureIsNow) {
-        self.playerItemVideoOutput = nil;
-    
-        if (_textureCache != NULL) {
-            CVOpenGLTextureCacheRelease(_textureCache);
-            _textureCache = NULL;
-        }
-        if (_latestTextureFrame != NULL) {
-            CVOpenGLTextureRelease(_latestTextureFrame);
-            _latestTextureFrame = NULL;
-        }
-        if (_latestPixelFrame != NULL) {
-            CVPixelBufferRelease(_latestPixelFrame);
-            _latestPixelFrame = NULL;
-        }
-        
-        if (_amplitudes) {
-            [_amplitudes release];
-            _amplitudes = nil;
-        }
-        _numAmplitudes = 0;
-		
-		
-		if (assetReader != NULL) {
-			[assetReader release];
-			assetReader = nil;
-			
-			// sync with queue
-			
-			dispatch_release(evQ);
-		}
-		
-    }
-    else {
-        // SK: Releasing the CARenderer is slow for some reason
-        //     It will freeze the main thread for a few dozen mS.
-        //     If you're swapping in and out videos a lot, the loadFile:
-        //     method should be re-written to just re-use and re-size
-        //     these layers/objects rather than releasing and reallocating
-        //     them every time a new file is needed.
-        
-        if (_layerRenderer) {
-            [_layerRenderer release];
-            _layerRenderer = nil;
-        }
-    }
-    
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    if (self.playerItem) {
-        [self.playerItem removeObserver:self forKeyPath:@"status"];
-        self.playerItem = nil;
-    }
-
-    [self.player replaceCurrentItemWithPlayerItem:nil];
-    self.player = nil;
-
+	// safety
+	// if someone did not call finalize
+	[self cleanup];
+	
     [super dealloc];
 }
+
+
+//--------------------------------------------------------------
+- (void)cleanup
+{
+	[self stop];
+	
+	if (self.theFutureIsNow) {
+		self.playerItemVideoOutput = nil;
+		
+		if (_textureCache != NULL) {
+			CVOpenGLTextureCacheRelease(_textureCache);
+			_textureCache = NULL;
+		}
+		if (_latestTextureFrame != NULL) {
+			CVOpenGLTextureRelease(_latestTextureFrame);
+			_latestTextureFrame = NULL;
+		}
+		if (_latestPixelFrame != NULL) {
+			CVPixelBufferRelease(_latestPixelFrame);
+			_latestPixelFrame = NULL;
+		}
+		
+		if (_amplitudes) {
+			[_amplitudes release];
+			_amplitudes = nil;
+		}
+		_numAmplitudes = 0;
+		
+		
+		// cleanup timeObserver, assetReader, queue
+		// did we try to load audio?
+		if (assetReader) {
+			
+			// safety in case we never started the player
+			if (self.player && _periodicTimeObserver) {
+				[_player removeTimeObserver:_periodicTimeObserver];
+			}
+			
+			// sync with queue to make sure nobody will use reference to self
+			dispatch_sync(evQ, ^{});
+			
+			// release the queue
+			dispatch_release(evQ);
+			
+			[assetReader release];
+			assetReader = nil;
+		}
+		
+	}
+	else {
+		// SK: Releasing the CARenderer is slow for some reason
+		//     It will freeze the main thread for a few dozen mS.
+		//     If you're swapping in and out videos a lot, the loadFile:
+		//     method should be re-written to just re-use and re-size
+		//     these layers/objects rather than releasing and reallocating
+		//     them every time a new file is needed.
+		
+		if (_layerRenderer) {
+			[_layerRenderer release];
+			_layerRenderer = nil;
+		}
+	}
+	
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
+	if (self.playerItem) {
+		[self.playerItem removeObserver:self forKeyPath:@"status"];
+		self.playerItem = nil;
+	}
+	
+	[self.player replaceCurrentItemWithPlayerItem:nil];
+	self.player = nil;
+}
+
+
 
 //--------------------------------------------------------------
 - (void)play

@@ -108,4 +108,8 @@
 // Old school video stuff
 - (void)render;
 
+// do some cleanup!
+- (void)cleanup;
+- (void)finalize;
+
 @end

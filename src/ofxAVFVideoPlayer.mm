@@ -25,7 +25,7 @@ ofxAVFVideoPlayer::ofxAVFVideoPlayer()
     currentLoopState = OF_LOOP_NORMAL;
     
     bTheFutureIsNow = false;
-	bShouldLoadAudio = false; // maybe: dont change previouse default behaviour and set this to true
+	bShouldLoadAudio = true; // maybe: change previous default behaviour: explicitly wanting to load audio
 }
 
 //--------------------------------------------------------------
@@ -79,7 +79,12 @@ void ofxAVFVideoPlayer::close()
 	
     if (moviePlayer != nil) {
 		NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-        [moviePlayer autorelease];
+		
+		// finalize movieplayer!!
+		// problems when just releasing the object
+		// due to retained moviePlayer
+		// if loading audio and it never got played timeObserver retains moviePlayer
+		[moviePlayer finalize];
         moviePlayer = nil;
 		[pool release];
 
