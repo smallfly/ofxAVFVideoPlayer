@@ -1,11 +1,23 @@
 #include "testApp.h"
 
+// cleanup
+testApp::~testApp()
+{
+    ofLogNotice() << "cleanup";
+    deleteMovie();
+}
+
 //--------------------------------------------------------------
 void testApp::setup()
 {
     ofSetVerticalSync(true);
     ofBackground(0);
-    
+	
+    videop = NULL;
+	
+    // explicitly tell it to load audio (default)
+    video.setShouldLoadAudio(true);
+	
     video.loadMovie("test.mov");
     video.play();
     video.setLoopState(OF_LOOP_NORMAL);
@@ -21,14 +33,18 @@ void testApp::update()
     if (video.isFrameNew()) {
         image.setFromPixels(video.getPixelsRef());
     }
+	
+    if (videop != NULL) {
+        videop->update();
+    }
 }
 
 //--------------------------------------------------------------
 void testApp::draw()
 {
     video.draw(0, 0);
-	if(image.bAllocated()){
-		image.draw(video.getWidth(), 0);
+    if(image.bAllocated()){
+        image.draw(video.getWidth(), 0);
     }
 	
     // Draw a timeline at the bottom of the screen.
@@ -77,10 +93,40 @@ void testApp::keyPressed(int key)
         case OF_KEY_DOWN:
             video.setSpeed(video.getSpeed() * 0.9);
             break;
+			
+        case 'c':
+            ofLogNotice() << "create a new movie";
             
+            deleteMovie();
+            
+            //create video
+            videop = new ofxAVFVideoPlayer;
+            videop->setShouldLoadAudio(true);
+            
+            videop->loadMovie("test.mov");
+            
+            // dont start the movie
+            // it will get cleaned up anyway
+//            videop->play();
+            break;
+            
+            
+        case 'd':
+            //destroy video
+            ofLogNotice() << "destroy the movie";
+            deleteMovie();
+			
         default:
             break;
     }
+}
+
+//--------------------------------------------------------------
+void testApp::deleteMovie(){
+	if (videop != NULL) {
+		delete videop;
+		videop = NULL;
+	}
 }
 
 //--------------------------------------------------------------

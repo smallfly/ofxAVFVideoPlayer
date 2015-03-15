@@ -9,6 +9,9 @@ void testApp::setup()
 {
     ofSetVerticalSync(true);
 
+	// explicitly tell it to load audio (default)
+	videoPlayer.setShouldLoadAudio(true);
+	
 //    videoPlayer.loadMovie("Casey_You_need_noise.mov");
 //    videoPlayer.loadMovie("fingers.mov");
     videoPlayer.loadMovie("cat.mp4");
