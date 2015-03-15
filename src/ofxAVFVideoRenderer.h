@@ -24,13 +24,13 @@
     // New school video stuff
     AVPlayerItemVideoOutput * _playerItemVideoOutput;
     CVOpenGLTextureCacheRef _textureCache;
-	CVOpenGLTextureRef _latestTextureFrame;
-	CVPixelBufferRef _latestPixelFrame;
+    CVOpenGLTextureRef _latestTextureFrame;
+    CVPixelBufferRef _latestPixelFrame;
 
     // Old school video stuff
     CARenderer * _layerRenderer;
     
-	BOOL _useTexture;
+    BOOL _useTexture;
     BOOL _useAlpha;
     
     CGSize _videoSize;
@@ -43,18 +43,18 @@
     
     BOOL _bLoading;
     BOOL _bLoaded;
-	BOOL _bShouldLoadAudio;
+    BOOL _bShouldLoadAudio;
     BOOL _bAudioLoaded;
     BOOL _bPaused;
     BOOL _bMovieDone;
-    	
+    
     // New school audio stuff
     NSMutableData *_amplitudes;
     int _numAmplitudes;
     __block id _periodicTimeObserver;  // dont copy that, use it directly in the block
-	
-	AVAssetReader* assetReader;
-	dispatch_queue_t evQ;
+    
+    AVAssetReader* assetReader;
+    dispatch_queue_t evQ;
 }
 
 @property (nonatomic, retain) AVPlayer * player;
@@ -108,7 +108,7 @@
 // Old school video stuff
 - (void)render;
 
-// do some cleanup!
+// do some cleanup
 - (void)cleanup;
 - (void)finalize;
 

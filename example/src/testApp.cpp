@@ -3,8 +3,8 @@
 // cleanup
 testApp::~testApp()
 {
-	ofLogNotice() << "cleanup";
-	deleteMovie();
+    ofLogNotice() << "cleanup";
+    deleteMovie();
 }
 
 //--------------------------------------------------------------
@@ -13,10 +13,10 @@ void testApp::setup()
     ofSetVerticalSync(true);
     ofBackground(0);
 	
-	videop = NULL;
+    videop = NULL;
 	
-	// explicitly tell it to load audio (default)
-	video.setShouldLoadAudio(true);
+    // explicitly tell it to load audio (default)
+    video.setShouldLoadAudio(true);
 	
     video.loadMovie("test.mov");
     video.play();
@@ -34,17 +34,17 @@ void testApp::update()
         image.setFromPixels(video.getPixelsRef());
     }
 	
-	if (videop != NULL) {
-		videop->update();
-	}
+    if (videop != NULL) {
+        videop->update();
+    }
 }
 
 //--------------------------------------------------------------
 void testApp::draw()
 {
     video.draw(0, 0);
-	if(image.bAllocated()){
-		image.draw(video.getWidth(), 0);
+    if(image.bAllocated()){
+        image.draw(video.getWidth(), 0);
     }
 	
     // Draw a timeline at the bottom of the screen.
@@ -94,27 +94,27 @@ void testApp::keyPressed(int key)
             video.setSpeed(video.getSpeed() * 0.9);
             break;
 			
-		case 'c':
-			ofLogNotice() << "create a new movie";
-			
-			deleteMovie();
-			
-			//create video
-			videop = new ofxAVFVideoPlayer;
-			videop->setShouldLoadAudio(true);
-			
-			videop->loadMovie("test.mov");
-			
-			// dont start the movie
-			// it will get cleaned up anyway
-//			videop->play();
-			break;
-			
-			
-		case 'd':
-			//destroy video
-			ofLogNotice() << "destroy the movie";
-			deleteMovie();
+        case 'c':
+            ofLogNotice() << "create a new movie";
+            
+            deleteMovie();
+            
+            //create video
+            videop = new ofxAVFVideoPlayer;
+            videop->setShouldLoadAudio(true);
+            
+            videop->loadMovie("test.mov");
+            
+            // dont start the movie
+            // it will get cleaned up anyway
+//            videop->play();
+            break;
+            
+            
+        case 'd':
+            //destroy video
+            ofLogNotice() << "destroy the movie";
+            deleteMovie();
 			
         default:
             break;
