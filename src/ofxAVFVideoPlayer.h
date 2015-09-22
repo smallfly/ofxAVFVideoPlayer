@@ -14,14 +14,14 @@
 #import "ofxAVFVideoRenderer.h"
 #endif
 
-class ofxAVFVideoPlayer  : public ofBaseVideoPlayer {
+class ofxAVFVideoPlayer { // : public ofBaseVideoPlayer {
     
 public:
     
     ofxAVFVideoPlayer();
     ~ofxAVFVideoPlayer();
     
-    bool                loadMovie(string path);
+    bool                load(string path);
     
     void                closeMovie();
     void                close();
@@ -41,9 +41,9 @@ public:
     // Returns openFrameworks compatible RGBA pixels.
     // Be aware of your current render mode.
     
-    unsigned char *     getPixels();
-    ofPixelsRef         getPixelsRef();
-    
+//    unsigned char *     getPixels();
+//    ofPixelsRef         getPixelsRef();
+
     // Returns openFrameworks compatible ofTexture pointer.
     // if decodeMode == OF_QTKIT_DECODE_PIXELS_ONLY,
     // the returned pointer will be NULL.

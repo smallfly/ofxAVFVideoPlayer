@@ -35,7 +35,7 @@ ofxAVFVideoPlayer::~ofxAVFVideoPlayer()
 }
 
 //--------------------------------------------------------------
-bool ofxAVFVideoPlayer::loadMovie(string path)
+bool ofxAVFVideoPlayer::load(string path)
 {
 
     if (bInitialized) {
@@ -215,42 +215,42 @@ float * ofxAVFVideoPlayer::getAllAmplitudes()
 }
 
 //--------------------------------------------------------------
-unsigned char * ofxAVFVideoPlayer::getPixels()
-{
-    if (bTheFutureIsNow) {
-        return getPixelsRef().getPixels();
-    }
-    
-    if (!moviePlayer || ![moviePlayer isLoaded] || !bInitialized) return NULL;
-    
-    if (bHavePixelsChanged) {
-        fbo.readToPixels(pixels);
-        bHavePixelsChanged = false; // Don't read pixels until next update() is called
-    }
-    return pixels.getPixels();
-}
-
-//--------------------------------------------------------------
-ofPixelsRef ofxAVFVideoPlayer::getPixelsRef()
-{
-    if (bTheFutureIsNow) {
-        if (isLoaded()) {
-            // Don't get the pixels every frame if it hasn't updated
-            if (bHavePixelsChanged) {
-                [moviePlayer pixels:pixels.getPixels()];
-                bHavePixelsChanged = false;
-            }
-        }
-        else {
-            ofLogError("ofxAVFVideoPlayer::getPixelsRef()") << "Returning pixels that may be unallocated. Make sure to initialize the video player before calling getPixelsRef.";
-        }
-    }
-    else {
-        getPixels();
-    }
-    
-    return pixels;
-}
+//unsigned char * ofxAVFVideoPlayer::getPixels()
+//{
+//    if (bTheFutureIsNow) {
+//        return getPixelsRef().getPixels();
+//    }
+//    
+//    if (!moviePlayer || ![moviePlayer isLoaded] || !bInitialized) return NULL;
+//    
+//    if (bHavePixelsChanged) {
+//        fbo.readToPixels(pixels);
+//        bHavePixelsChanged = false; // Don't read pixels until next update() is called
+//    }
+//    return pixels.getPixels();
+//}
+//
+////--------------------------------------------------------------
+//ofPixelsRef ofxAVFVideoPlayer::getPixelsRef()
+//{
+//    if (bTheFutureIsNow) {
+//        if (isLoaded()) {
+//            // Don't get the pixels every frame if it hasn't updated
+//            if (bHavePixelsChanged) {
+//                [moviePlayer pixels:pixels.getPixels()];
+//                bHavePixelsChanged = false;
+//            }
+//        }
+//        else {
+//            ofLogError("ofxAVFVideoPlayer::getPixelsRef()") << "Returning pixels that may be unallocated. Make sure to initialize the video player before calling getPixelsRef.";
+//        }
+//    }
+//    else {
+//        getPixels();
+//    }
+//    
+//    return pixels;
+//}
 
 //--------------------------------------------------------------
 ofTexture* ofxAVFVideoPlayer::getTexture()
@@ -483,7 +483,7 @@ bool ofxAVFVideoPlayer::setPixelFormat(ofPixelFormat newPixelFormat)
         // If we already have a movie loaded we need to reload
         // the movie with the new settings correctly allocated.
         if (isLoaded()) {
-            loadMovie(moviePath);
+            load(moviePath);
         }
     }
     return true;
